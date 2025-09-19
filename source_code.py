@@ -207,8 +207,8 @@ def call_openrouter_llm(prompt: str) -> str:
         return "API key missing. Set OPENROUTER_API_KEY and rerun."
     model = os.getenv("OPENROUTER_MODEL", "google/gemma-3n-e2b-it:free")
     headers = {
-        "Authorization": f"Bearer {API_KEY}
-"        , "Content-Type": "application/json",
+        "Authorization": f"Bearer {API_KEY}",
+        "Content-Type": "application/json",
         # Optional but recommended by OpenRouter for attribution/analytics
         "HTTP-Referer": os.getenv("APP_URL", "https://github.com/KrithikVishal/Clinical-Copilot-AI"),
         "X-Title": os.getenv("APP_TITLE", "Clinical Copilot"),
