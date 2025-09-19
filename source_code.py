@@ -15,13 +15,16 @@ try:
     REPORTLAB_AVAILABLE = True
 except Exception:
     REPORTLAB_AVAILABLE = False
-from openai import OpenAI
+"""Single-file Streamlit clinical copilot.
+
+Change log:
+- Replaced OpenAI SDK usage with direct OpenRouter REST calls (SDK caused TypeError under Python 3.13 on Streamlit Cloud).
+"""
 
 # OpenRouter API setup (must be provided via environment variable)
 API_KEY = os.getenv("OPENROUTER_API_KEY")
 if not API_KEY:
     st.warning("OPENROUTER_API_KEY not set. Set it in your environment before using analysis features.")
-client = OpenAI(base_url="https://openrouter.ai/api/v1", api_key=API_KEY) if API_KEY else None
 
 FHIR_BASE_URL = "https://hapi.fhir.org/baseR4"
 
@@ -199,27 +202,41 @@ Plan (3 steps):
 """.strip()
     return prompt
 
-def call_openrouter_llm(prompt):
-    if not client:
+def call_openrouter_llm(prompt: str) -> str:
+    if not API_KEY:
         return "API key missing. Set OPENROUTER_API_KEY and rerun."
     model = os.getenv("OPENROUTER_MODEL", "google/gemma-3n-e2b-it:free")
+    headers = {
+        "Authorization": f"Bearer {API_KEY}
+"        , "Content-Type": "application/json",
+        # Optional but recommended by OpenRouter for attribution/analytics
+        "HTTP-Referer": os.getenv("APP_URL", "https://github.com/KrithikVishal/Clinical-Copilot-AI"),
+        "X-Title": os.getenv("APP_TITLE", "Clinical Copilot"),
+    }
+    payload = {
+        "model": model,
+        "messages": [{"role": "user", "content": prompt}],
+        "temperature": 0.2,
+        "max_tokens": 220,
+    }
+    url = "https://openrouter.ai/api/v1/chat/completions"
     try:
-        completion = client.chat.completions.create(
-            model=model,
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0.2,
-            max_tokens=220,
-        )
-        return completion.choices[0].message.content
-    except Exception:
-        # Fallback to a permissive chat model if provider rejects the format
-        completion = client.chat.completions.create(
-            model="mistralai/mistral-7b-instruct:free",
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0.2,
-            max_tokens=220,
-        )
-        return completion.choices[0].message.content
+        resp = requests.post(url, headers=headers, json=payload, timeout=60)
+        resp.raise_for_status()
+        data = resp.json()
+        return data.get("choices", [{}])[0].get("message", {}).get("content", "(no content)")
+    except Exception as e:
+        # Attempt a single fallback model if explicitly different
+        if model != "mistralai/mistral-7b-instruct:free":
+            payload["model"] = "mistralai/mistral-7b-instruct:free"
+            try:
+                resp2 = requests.post(url, headers=headers, json=payload, timeout=60)
+                resp2.raise_for_status()
+                data2 = resp2.json()
+                return data2.get("choices", [{}])[0].get("message", {}).get("content", f"Fallback error: {e}")
+            except Exception as e2:
+                return f"LLM error (fallback failed): {e2}"
+        return f"LLM error: {e}"
 
 # Streamlit app UI
 st.title("Clinical Copilot AI Assistant")
