@@ -1,9 +1,3 @@
-fastapi>=0.110,<0.112
-uvicorn[standard]>=0.29,<0.31
-transformers>=4.40,<4.45
-torch>=2.1.0 ; platform_system != 'Windows' or platform_machine != 'arm64'
-torch>=2.1.0+cpu --extra-index-url https://download.pytorch.org/whl/cpu ; platform_system == 'Windows' and platform_machine == 'AMD64'
-sentencepiece>=0.1.99,<0.2
 streamlit>=1.33,<1.39
 requests>=2.31,<2.33
 pandas>=2.2,<2.3
@@ -11,7 +5,5 @@ openpyxl>=3.1,<3.2
 openai>=1.30,<1.40
 reportlab>=4.0,<4.2
 
-# Notes:
-# - Torch entries are split with environment markers for Windows CPU vs others; adjust if using GPU (install separately).
-# - Pin ranges chosen to balance stability and security updates without frequent breakage.
-# - Remove or relax pins if you prefer latest versions.
+# Minimal dependencies for single-file Streamlit clinical copilot.
+# Remove reportlab if you do not need PDF export.
