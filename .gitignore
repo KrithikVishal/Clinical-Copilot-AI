@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+
+# Envs
+.env
+.venv/
+venv/
+ENV/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Bytecode / caches
+*.mypy_cache/
+*.pytest_cache/
+
+# Node (if future frontend build assets)
+node_modules/
+
+# Logs
+*.log
+
+# Local data
+patients_storage.xlsx
+*.pdf
+*.xlsx
+!patients_template.xlsx
+
+# OS
+.DS_Store
+Thumbs.db
